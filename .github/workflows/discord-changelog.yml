@@ -23,11 +23,13 @@ jobs:
             const fields = commits.map(commit => {
               const shortSha = commit.id.substring(0, 7);
               const commitUrl = commit.url;
-              const titleLine = commit.message.split('\n')[0];
-              const description = commit.message.split('\n').slice(1).join('\n');
+              const messageLines = commit.message.split('\n');
+              const title = messageLines[0];
+              const body = messageLines.slice(1).join('\n').trim();
+
               return {
-                name: `[\`${shortSha}\`](${commitUrl}) - ${titleLine}`,
-                value: description || `by \`${commit.author.name}\``,
+                name: `[${shortSha}](${commitUrl}) - ${title}`,
+                value: body || '—',
               };
             });
 
@@ -36,9 +38,8 @@ jobs:
                 {
                   title: `Push to ${repoName}`,
                   url: repoUrl,
-                  description: `New commit${commits.length > 1 ? 's' : ''} pushed to [${repoName}](${repoUrl})`,
                   fields: fields,
-                  color: 0x7289DA, // Discord blurple
+                  color: 0x7289DA,
                   timestamp: new Date().toISOString()
                 }
               ]
@@ -49,3 +50,4 @@ jobs:
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
             });
+
