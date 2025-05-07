@@ -1,0 +1,26 @@
+name: Discord Changelog Notification
+
+on:
+  push:
+    branches:
+      - main  # Change this to your target branch
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Format and Send Discord Webhook
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          REPO_NAME="${{ github.repository }}"
+          REPO_URL="https://github.com/${REPO_NAME}"
+          COMMITS=$(echo "${{ toJson(github.event.commits) }}" | jq -r '.[] | "*[`" + .id[0:7] + "`](" + .url + ")* - " + .message + " (`" + .author.name + "`)"')
+          
+          MESSAGE="**[${REPO_NAME}](${REPO_URL}) - Push Notification**\n\n${COMMITS}"
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": \"$MESSAGE\"}" \
+               $DISCORD_WEBHOOK_URL
