@@ -26,10 +26,10 @@ jobs:
               const messageLines = commit.message.split('\n');
               const title = messageLines[0];
               const body = messageLines.slice(1).join('\n').trim();
-
+            
               return {
-                name: `[${shortSha}](${commitUrl}) - ${title}`,
-                value: body || '—',
+                name: '\u200B',  // Zero-width space to omit the field title
+                value: `[\`${shortSha}\`](${commitUrl}) - **${title}**\n${body || ''}`
               };
             });
 
