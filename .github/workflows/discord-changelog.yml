@@ -29,7 +29,7 @@ jobs:
             
               return {
                 name: '\u200B',  // Zero-width space to omit the field title
-                value: `[\`${shortSha}\`](${commitUrl}) - **${title}**\n${body || ''}`
+                value: `[\`${shortSha}\`](${commitUrl}) **${title}**\n${body || ''}`
               };
             });
 
