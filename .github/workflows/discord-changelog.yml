@@ -1,39 +1,51 @@
-- name: Send Discord Notification via Embed
-  uses: actions/github-script@v7
-  env:
-    DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-  with:
-    script: |
-      const repoName = process.env.GITHUB_REPOSITORY;
-      const repoUrl = `https://github.com/${repoName}`;
-      const commits = context.payload.commits;
+name: Discord Changelog Notification
 
-      const fields = commits.map(commit => {
-        const shortSha = commit.id.substring(0, 7);
-        const commitUrl = commit.url;
-        const titleLine = commit.message.split('\n')[0];
-        const description = commit.message.split('\n').slice(1).join('\n');
-        return {
-          name: `[\`${shortSha}\`](${commitUrl}) - ${titleLine}`,
-          value: description || "No additional message",
-        };
-      });
+on:
+  push:
+    branches:
+      - main  # Change this if you use a different branch
 
-      const payload = {
-        embeds: [
-          {
-            title: `Push to ${repoName}`,
-            url: repoUrl,
-            description: `New commit${commits.length > 1 ? 's' : ''} pushed to [${repoName}](${repoUrl})`,
-            fields: fields,
-            color: 0x7289DA, // Discord blurple
-            timestamp: new Date().toISOString()
-          }
-        ]
-      };
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
 
-      await fetch(process.env.DISCORD_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+    steps:
+      - name: Send Discord Notification via Embed
+        uses: actions/github-script@v7
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        with:
+          script: |
+            const repoName = process.env.GITHUB_REPOSITORY;
+            const repoUrl = `https://github.com/${repoName}`;
+            const commits = context.payload.commits;
+
+            const fields = commits.map(commit => {
+              const shortSha = commit.id.substring(0, 7);
+              const commitUrl = commit.url;
+              const titleLine = commit.message.split('\n')[0];
+              const description = commit.message.split('\n').slice(1).join('\n');
+              return {
+                name: `[\`${shortSha}\`](${commitUrl}) - ${titleLine}`,
+                value: description || `by \`${commit.author.name}\``,
+              };
+            });
+
+            const payload = {
+              embeds: [
+                {
+                  title: `Push to ${repoName}`,
+                  url: repoUrl,
+                  description: `New commit${commits.length > 1 ? 's' : ''} pushed to [${repoName}](${repoUrl})`,
+                  fields: fields,
+                  color: 0x7289DA, // Discord blurple
+                  timestamp: new Date().toISOString()
+                }
+              ]
+            };
+
+            await fetch(process.env.DISCORD_WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
