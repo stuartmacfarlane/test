@@ -3,24 +3,32 @@ name: Discord Changelog Notification
 on:
   push:
     branches:
-      - main  # Change this to your target branch
+      - main  # Change this to your desired branch
 
 jobs:
   notify:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Format and Send Discord Webhook
+      - name: Send Discord Notification
+        uses: actions/github-script@v7
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: |
-          REPO_NAME="${{ github.repository }}"
-          REPO_URL="https://github.com/${REPO_NAME}"
-          COMMITS=$(echo "${{ toJson(github.event.commits) }}" | jq -r '.[] | "*[`" + .id[0:7] + "`](" + .url + ")* - " + .message + " (`" + .author.name + "`)"')
-          
-          MESSAGE="**[${REPO_NAME}](${REPO_URL}) - Push Notification**\n\n${COMMITS}"
+        with:
+          script: |
+            const repoName = process.env.GITHUB_REPOSITORY;
+            const repoUrl = `https://github.com/${repoName}`;
+            const commits = context.payload.commits;
 
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"content\": \"$MESSAGE\"}" \
-               $DISCORD_WEBHOOK_URL
+            let message = `**[${repoName}](${repoUrl}) - Push Notification**\n\n`;
+
+            for (const commit of commits) {
+              const shortSha = commit.id.substring(0, 7);
+              message += `*[\\\`${shortSha}\\`](<${commit.url}>)* - ${commit.message} (\`${commit.author.name}\`)\n`;
+            }
+
+            await fetch(process.env.DISCORD_WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: message })
+            });
