@@ -24,7 +24,7 @@ jobs:
 
             for (const commit of commits) {
               const shortSha = commit.id.substring(0, 7);
-              message += `*[\\\`${shortSha}\\`](<${commit.url}>)* - ${commit.message} (\`${commit.author.name}\`)\n`;
+              message += `*[\`${shortSha}\`](${commitUrl})* - ${titleLine} (\`${commit.author.name}\`)\n`;
             }
 
             await fetch(process.env.DISCORD_WEBHOOK_URL, {
